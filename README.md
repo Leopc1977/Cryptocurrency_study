@@ -6,7 +6,7 @@ Solidity Tutorial - A Full Course on Ethereum, Blockchain Development, Smart Con
 
 How To Build A Blockchain In Python (Get Pre-Built Runtime):
 https://www.activestate.com/blog/how-to-build-a-blockchain-in-python/
-GITLAB : https://gitlab.com/dsblendo/blockchain/-/blob/master/Blockchain.py
+repo gitlab : https://gitlab.com/dsblendo/blockchain/-/blob/master/Blockchain.py
 
 Creating a blockchain in 60 lines of Javascript:
 https://dev.to/freakcdev297/creating-a-blockchain-in-60-lines-of-javascript-5fka
