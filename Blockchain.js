@@ -1,4 +1,32 @@
 const crypto = require("crypto"), SHA256 = message => crypto.createHash("sha256").update(message).digest("hex");
+const EC = require("elliptic").ec, ec = new EC("secp256k1");
+const keyPair = ec.genKeyPair();
+
+class Transaction {
+    constructor(from, to, amount) {
+        this.from = from;
+        this.to = to;
+        this.amount = amount;
+    }
+
+    sign(keyPair) {
+        // Check if the public key matches the "from" address of the transaction
+        if (keyPair.getPublic("hex") === this.from) {
+            // Sign the transaction
+            this.signature = keyPair.sign(SHA256(this.from + this.to + this.amount), "base64").toDER("hex");
+        }
+    }
+
+    isValid(tx,chain){
+        return(
+            tx.from &&
+            tx.to &&
+            tx.amount &&
+            chain.getBalanceOfAddress(tx.from) >= tx.amount &&
+            ec.keyFromPublic(tx.from, "hex").verify(SHA256(tx.from+tx.to+tx.amount+tx.gas),tx.signature)
+        )
+    }
+}
 
 class Block{
     constructor(timestamp = "",data=[]){
@@ -19,13 +47,30 @@ class Block{
             this.hash=this.getHash();
         }
     }
+
+    hasValidTransactions(chain) {
+        return this.data.every(transaction=>transaction.isValid(transaction,chain))
+    }
 }
 
 class Blockchain {
     constructor(){
+        this.transactions = [];
         this.chain = [new Block(Date.now().toString())];
         this.difficulty = 1;
         this.blockTime = 30000;
+        this.reward = 42;
+    }
+
+    addTransaction(transaction) {
+        if (transaction.isValid(transaction,this)) {
+            this.transactions.push(transaction); 
+        }
+    }
+
+    mineTransactions(rewardAddress) {
+        this.addBlock(new Block(Date.now().toString(), [new Transaction(CREATE_REWARD_ADDRESS, rewardAddress, this.reward), this.transactions]));
+        this.transactions = [];
     }
 
     getLastBlock(){
@@ -50,15 +95,27 @@ class Blockchain {
             //check validation
             currentBlockNOTOK = (currentBlock.hash !== previous_hash.getHash())
             previousHashNOTOK = (previousBlock.hash !==currentBlock.previousHash)
-            if (currentBlockNOTOK || previousHashNOTOK){
+            transactionNOTOK = (!currentBlock.hasValidTransactions(blockchain))
+            if (currentBlockNOTOK || previousHashNOTOK || transactionNOTOK){
                 return false;
             }
-
-            return true;        
         }
+        return true;        
+    }
 
-        
+    getBalanceOfAddress(address){
+        let balance = 0;
+
+        this.chain.forEach(transaction=>{
+            if (transaction.from === address) {
+                balance -= transaction.amount;
+            }
+            if (transaction.to === address) {
+                balance += transaction.amount;
+            }
+        });
+        return balance;
     }
 }
 
-module.exports = { Block, Blockchain };
+module.exports = { Block, Blockchain,Transaction };
