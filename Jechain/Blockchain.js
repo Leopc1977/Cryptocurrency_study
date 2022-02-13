@@ -18,6 +18,12 @@ class Blockchain {
         //Genesis block
         const initialCoinRelease = new Transaction(MINT_PUBLIC_ADDRESS, holderKeyPair.getPublic("hex"),10000,10);
         this.chain = [new Block(Date.now().toString(), [initialCoinRelease])];
+
+        this.chain.forEach(block =>{
+            block.data.forEach(transaction => {
+                console.log(transaction)
+            });
+        });
     }
 
     addTransaction(transaction) {
@@ -33,11 +39,9 @@ class Blockchain {
             gas+=transaction.gas
         });
 
-        const rewardTransaction = new Transaction(MINT_PUBLIC_ADDRESS, rewardAddress, this.reward);
+        const rewardTransaction = new Transaction(MINT_PUBLIC_ADDRESS, rewardAddress, this.reward+gas);
         rewardTransaction.sign(MINT_KEY_PAIR)
-        
-        this.addBlock(new Block(Date.now().toString(), [rewardTransaction,...this.transactions]));
-        
+                
          // Prevent people from minting coins and mine the minting transaction.
          if (this.transactions.length !== 0) {
             this.addBlock(new Block(Date.now().toString(), [rewardTransaction, ...this.transactions]));
@@ -81,7 +85,7 @@ class Blockchain {
 
         this.chain.forEach(block =>{
             block.data.forEach(transaction => {
-                console.log(transaction)
+                //console.log(transaction)
                 if (transaction.from === address) {
                     balance -= transaction.amount;
                     balance -= transaction.gas;
